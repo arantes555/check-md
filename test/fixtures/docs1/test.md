@@ -53,3 +53,9 @@ Footnotes[^test17] test ref
 [test22](./other#testother-1)
 
 [test23](./other#testother-2)
+
+![test24](firstalias/placeholder-image.png)
+
+![test25](@secondalias/placeholder-image.png)
+
+[test26](firstalias#test)

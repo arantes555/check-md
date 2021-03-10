@@ -36,6 +36,7 @@ const presetConfig = {
     root: [ './' ],
     pattern: '**/*.md',
     ignore: [ '**/node_modules' ],
+    aliases: [],
     ignoreFootnotes: false,
     uniqueSlugStartIndex: 2,
     cwd: process.cwd(),
@@ -62,6 +63,7 @@ const presetConfig = {
  * @property {String} [CheckOption.preset]
  * @property {String | Array<String>} [CheckOption.pattern]
  * @property {String | Array<String>} [CheckOption.ignore]
+ * @property {Array<String>} [CheckOption.aliases]
  * @property {Boolean} [CheckOption.ignoreFootnotes]
  * @property {Number} [CheckOption.uniqueSlugStartIndex]
  * @property {typeof defaultSlugify} [CheckOption.slugify]
@@ -254,6 +256,14 @@ async function check(options) {
     }),
   };
 
+  const aliases = new Map();
+  assert(Array.isArray(options.aliases), 'options.aliases must be array');
+  for (const alias of options.aliases) {
+    const split = alias.split('=');
+    assert(split.length === 2, 'aliases must be of the form \'alias=./actual/path/\'');
+    aliases.set(split[0], split[1]);
+  }
+
   // normalize url
   const normalizeUrl = (fileUrl, ext) => {
     ext = ext || path.extname(fileUrl);
@@ -323,7 +333,7 @@ async function check(options) {
           result.deadlink.list.push({ ...baseReportObj, errMsg: 'Url link is empty' });
         } else {
           // only handle local url
-          const pathname = urlObj.pathname || '';
+          let pathname = urlObj.pathname || '';
           let ext = path.extname(pathname);
           let matchAbUrl;
 
@@ -333,9 +343,13 @@ async function check(options) {
               matchAbUrl = root.map(r => normalizeUrl(path.join(cwd, r, pathname.substring(1)), ext))
                 .find(f => fileExist(f));
             } else {
+              const firstSegment = pathname.split('/')[0];
+              if (aliases.has(firstSegment)) {
+                pathname = pathname.replace(firstSegment, aliases.get(firstSegment));
+              }
               matchAbUrl = path.resolve(dirname, pathname);
             }
-          } else {
+          } else { // this is when there is only a hash
             matchAbUrl = fileUrl;
             ext = path.extname(matchAbUrl);
           }

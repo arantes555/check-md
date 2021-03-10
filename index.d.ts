@@ -10,6 +10,7 @@ export interface CheckOption {
   preset?: string;
   pattern?: string | string[];
   ignore?: string | string[];
+  aliases?: string[];
   ignoreFootnotes?: boolean;
   uniqueSlugStartIndex?: number;
   slugify?: typeof defaultSlugify;
@@ -53,6 +54,7 @@ export interface T102 {
   root: string[];
   pattern: string;
   ignore: string[];
+  aliases: any[];
   ignoreFootnotes: boolean;
   uniqueSlugStartIndex: number;
   cwd: string;

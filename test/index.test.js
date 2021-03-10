@@ -9,7 +9,7 @@ describe('test/index.test.js', () => {
 
   it('should works without error', async () => {
     const result = await checkMd.check({ cwd: path.resolve(__dirname, './fixtures/docs1') });
-    assert(result.deadlink.list.length === 10);
+    assert(result.deadlink.list.length === 13);
     assert(result.warning.list.length === 1);
     assert(result.deadlink.list[0].fullText.includes('[test1]'));
     assert(result.deadlink.list[0].line === 5);
@@ -30,19 +30,28 @@ describe('test/index.test.js', () => {
     assert(result.deadlink.list[9].fullText.includes('[test22]'));
     assert(result.deadlink.list[9].line === 53);
     assert(result.deadlink.list[9].col === 1);
+    assert(result.deadlink.list[10].fullText.includes('![test24]'));
+    assert(result.deadlink.list[11].fullText.includes('![test25]'));
+    assert(result.deadlink.list[12].fullText.includes('[test26]'));
     assert(result.warning.list[0].fullText.includes('[test6]'));
 
     const resultWithIgnoreFootnotes = await checkMd.check({
       cwd: path.resolve(__dirname, './fixtures/docs1'),
       ignoreFootnotes: true,
     });
-    assert(resultWithIgnoreFootnotes.deadlink.list.length === 9);
+    assert(resultWithIgnoreFootnotes.deadlink.list.length === 12);
 
     const resultWithUniqueSlugStartIndex = await checkMd.check({
       cwd: path.resolve(__dirname, './fixtures/docs1'),
       uniqueSlugStartIndex: 1,
     });
-    assert(resultWithUniqueSlugStartIndex.deadlink.list.length === 9);
+    assert(resultWithUniqueSlugStartIndex.deadlink.list.length === 12);
+
+    const resultWithAliases = await checkMd.check({
+      cwd: path.resolve(__dirname, './fixtures/docs1'),
+      aliases: [ 'firstalias=./dir', '@secondalias=./dir' ],
+    });
+    assert(resultWithAliases.deadlink.list.length === 10);
   });
 
   it('should fix without error', async () => {

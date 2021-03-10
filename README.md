@@ -42,6 +42,7 @@ Options:
   -p, --preset [name]                 Preset config(eg vuepress, default)
   -P, --pattern [pattern]             Glob patterns, default to **/*.md
   -i, --ignore [pattern]              Ignore patterns, will merge to pattern, default to **/node_modules
+  -a, --aliases [aliases]             Path aliases in the form 'alias1=./actual/path/,alias2=./other/path/'
   --ignore-footnotes                  Ignore footnotes, default to false
   --unique-slug-start-index [number]  Index to start with when making duplicate slugs unique, default to 2
   --exit-level [level]                Process exit level, default to error, other choice is warn and none, it will not exit if setting to none
