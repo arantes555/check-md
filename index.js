@@ -261,7 +261,7 @@ async function check(options) {
   for (const alias of options.aliases) {
     const split = alias.split('=');
     assert(split.length === 2, 'aliases must be of the form \'alias=./actual/path/\'');
-    aliases.set(split[0], path.resolve(options.cwd, split[1]));
+    aliases.set(split[0], path.resolve(process.cwd(), split[1]));
   }
 
   // normalize url

@@ -50,7 +50,7 @@ describe('test/index.test.js', () => {
 
     const resultWithAliases = await checkMd.check({
       cwd: path.resolve(__dirname, './fixtures/docs1'),
-      aliases: [ 'firstalias=./dir', '@secondalias=./dir' ],
+      aliases: [ `firstalias=${path.resolve(__dirname, './fixtures/docs1/dir')}`, `@secondalias=${path.resolve(__dirname, './fixtures/docs1/dir')}` ],
     });
     assert(resultWithAliases.deadlink.list.length === 10);
   });
