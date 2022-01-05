@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
 const url = require('url');
-const diacritics = require('diacritics');
 const assert = require('assert');
 const headingRE = /(?:\r?\n|^)#+([^\n]+)/g;
 const imgTitleRE = /^(.*?) ".*?"$/;
@@ -13,7 +12,8 @@ const matchAnchorStr = `((?:\\!)?\\[[^\\]\\r\\n]+\\])(?:(?:\\: *${matchUrlStr('\
 const matchAnchorRE = new RegExp(`(?:\\r?\\n|\`\`\`|${matchAnchorStr})`);
 // eslint-disable-next-line no-control-regex
 const rControl = /[\u0000-\u001f]/g;
-const rSpecial = /[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'<>,.?/]+/g;
+const rSpecial = /[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'“”‘’–—<>,.?/]+/g;
+const rCombining = /[\u0300-\u036F]/g;
 const LOG_LEVELS = {
   none: 0,
   info: 1,
@@ -116,14 +116,17 @@ function hasHeading(fileUrl, heading, slugify, uniqueSlugStartIndex) {
 
 // slugify
 function defaultSlugify(str, lower = true) {
-  str = diacritics.remove(str)
+  // Split accented characters into components
+  str = str.normalize('NFKD')
+    // Remove accents
+    .replace(rCombining, '')
     // Remove control characters
     .replace(rControl, '')
     // Replace special characters
     .replace(rSpecial, '-')
-    // Remove continous separators
+    // Remove continuous separators
     .replace(/\-{2,}/g, '-')
-    // Remove prefixing and trailing separtors
+    // Remove prefixing and trailing separators
     .replace(/^\-+|\-+$/g, '')
     // ensure it doesn't start with a number (#121)
     .replace(/^(\d)/, '_$1');
