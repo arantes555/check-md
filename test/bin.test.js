@@ -23,4 +23,15 @@ describe('test/bin.test.js', () => {
       // .debug()
       .end();
   });
+
+  it('should work with overriding root', async () => {
+    await coffee.fork(binPath, [ '-r', './,./.vuepress/public' ], { cwd: path.resolve(__dirname, './fixtures/vuepress/docs') })
+      .expect('stderr', /Checking failed/)
+      .expect('stderr', /readme\.md/)
+      .notExpect('stderr', /other\.md/)
+      .notExpect('stderr', /\!\[avatar\]\(\/5856440\.jpg\)/)
+      .expect('code', 1)
+      // .debug()
+      .end();
+  });
 });

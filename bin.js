@@ -25,6 +25,7 @@ program.parse(process.argv);
 const options = {
   fix: !!program.fix,
   cwd: program.cwd,
+  root: program.root ? program.root.split(',') : undefined,
   preset: program.preset,
   exitLevel: program.exitLevel,
   pattern: program.pattern ? program.pattern.split(',') : undefined,
