@@ -10,6 +10,7 @@ const imgSizeRE = /^(.*?) =[\dx]+$/;
 const matchUrlStr = c => `([^${c}]*)`;
 const matchAnchorStr = `((?:\\!)?\\[[^\\]\\r\\n]+\\])(?:(?:\\: *${matchUrlStr('\\r\\n')})|(?:\\(${matchUrlStr('\\)')}\\)))`;
 const matchAnchorRE = new RegExp(`(?:\\r?\\n|\`\`\`|${matchAnchorStr})`);
+const isEscapedRE = /(?:^|[^\\])(?:\\\\)*\\$/;
 // eslint-disable-next-line no-control-regex
 const rControl = /[\u0000-\u001f]/g;
 const rSpecial = /[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'“”‘’–—<>,.?/]+/g;
@@ -310,99 +311,100 @@ async function check(options) {
         // new line
         line++;
         lineIndex = scanIndex + matches.index + char.length;
-      } else if (char === '```') {
-        // code block
-        inBlock = !inBlock;
-      } else if (!inBlock) {
-        // Support image alt attribute
-        const imgTitleMatch = matchUrl.match(imgTitleRE);
-        if (imgTitleMatch) {
-          matchUrl = imgTitleMatch[1];
-        }
-        // Support image alt attribute
-        const imgSizeMatch = matchUrl.match(imgSizeRE);
-        if (imgSizeMatch) {
-          matchUrl = imgSizeMatch[1];
-        }
-        const col = collectContent.length - char.length - lineIndex + 1;
-        const baseReportObj = { matchUrl, fullText: char, fileUrl, line, col };
-        const urlObj = url.parse(matchUrl);
-        if (urlObj.protocol) {
-          // do nothing with remote url
-        } else if (ignoreFootnotes && char.startsWith('[^')) {
-          // do nothing with footnote
-        } else if (!matchUrl) {
-          // empty url
-          result.deadlink.list.push({ ...baseReportObj, errMsg: 'Url link is empty' });
-        } else {
-          // only handle local url
-          let pathname = urlObj.pathname || '';
-          let ext = path.extname(pathname);
-          let matchAbUrl;
-
-          if (pathname) {
-            if (pathname.charAt(0) === '/') {
-              // find exist file
-              matchAbUrl = root.map(r => normalizeUrl(path.join(cwd, r, pathname.substring(1)), ext))
-                .find(f => fileExist(f));
-            } else {
-              const firstSegment = pathname.split('/')[0];
-              if (aliases.has(firstSegment)) {
-                pathname = pathname.replace(firstSegment, aliases.get(firstSegment));
-              }
-              matchAbUrl = path.resolve(dirname, pathname);
-            }
-          } else { // this is when there is only a hash
-            matchAbUrl = fileUrl;
-            ext = path.extname(matchAbUrl);
+      } else if (!beforeContent.endsWith('\\') || !isEscapedRE.test(beforeContent)) { // if block is escaped, skip
+        if (char === '```') {
+          // code block
+          inBlock = !inBlock;
+        } else if (!inBlock) {
+          // Support image alt attribute
+          const imgTitleMatch = matchUrl.match(imgTitleRE);
+          if (imgTitleMatch) {
+            matchUrl = imgTitleMatch[1];
           }
-
-          matchAbUrl = matchAbUrl && normalizeUrl(matchAbUrl, ext);
-          if (ext === '.html') {
-            // warning
-            if (fix) {
-              // replace .html to .md
-              urlObj.pathname = `${urlObj.pathname.substring(0, urlObj.pathname.length - 4)}md`;
-            } else {
-              result.warning.list.push({ ...baseReportObj, errMsg: 'Should use .md instead of .html' });
-            }
+          // Support image alt attribute
+          const imgSizeMatch = matchUrl.match(imgSizeRE);
+          if (imgSizeMatch) {
+            matchUrl = imgSizeMatch[1];
           }
+          const col = collectContent.length - char.length - lineIndex + 1;
+          const baseReportObj = { matchUrl, fullText: char, fileUrl, line, col };
+          const urlObj = url.parse(matchUrl);
+          if (urlObj.protocol) {
+            // do nothing with remote url
+          } else if (ignoreFootnotes && char.startsWith('[^')) {
+            // do nothing with footnote
+          } else if (!matchUrl) {
+            // empty url
+            result.deadlink.list.push({ ...baseReportObj, errMsg: 'Url link is empty' });
+          } else {
+            // only handle local url
+            let pathname = urlObj.pathname || '';
+            let ext = path.extname(pathname);
+            let matchAbUrl;
 
-          if (!matchAbUrl || !fileExist(matchAbUrl)) {
-            // file is not found
-            result.deadlink.list.push({ ...baseReportObj, errMsg: 'File is not found' });
-          } else if (urlObj.hash) {
-            let hash = decodeURIComponent(urlObj.hash.substring(1));
-
-            const slugify = options.slugify || defaultSlugify;
-            // check slugify
-            const slugHash = slugify(hash, false);
-
-            if (slugHash !== hash) {
-              if (fix) {
-                urlObj.hash = slugHash;
+            if (pathname) {
+              if (pathname.charAt(0) === '/') {
+                // find exist file
+                matchAbUrl = root.map(r => normalizeUrl(path.join(cwd, r, pathname.substring(1)), ext))
+                  .find(f => fileExist(f));
               } else {
-                result.deadlink.list.push({ ...baseReportObj, errMsg: 'Hash should slugify' });
+                const firstSegment = pathname.split('/')[0];
+                if (aliases.has(firstSegment)) {
+                  pathname = pathname.replace(firstSegment, aliases.get(firstSegment));
+                }
+                matchAbUrl = path.resolve(dirname, pathname);
+              }
+            } else { // this is when there is only a hash
+              matchAbUrl = fileUrl;
+              ext = path.extname(matchAbUrl);
+            }
+
+            matchAbUrl = matchAbUrl && normalizeUrl(matchAbUrl, ext);
+            if (ext === '.html') {
+              // warning
+              if (fix) {
+                // replace .html to .md
+                urlObj.pathname = `${urlObj.pathname.substring(0, urlObj.pathname.length - 4)}md`;
+              } else {
+                result.warning.list.push({ ...baseReportObj, errMsg: 'Should use .md instead of .html' });
+              }
+            }
+
+            if (!matchAbUrl || !fileExist(matchAbUrl)) {
+              // file is not found
+              result.deadlink.list.push({ ...baseReportObj, errMsg: 'File is not found' });
+            } else if (urlObj.hash) {
+              let hash = decodeURIComponent(urlObj.hash.substring(1));
+
+              const slugify = options.slugify || defaultSlugify;
+              // check slugify
+              const slugHash = slugify(hash, false);
+
+              if (slugHash !== hash) {
+                if (fix) {
+                  urlObj.hash = slugHash;
+                } else {
+                  result.deadlink.list.push({ ...baseReportObj, errMsg: 'Hash should slugify' });
+                }
+
+                hash = slugHash;
               }
 
-              hash = slugHash;
+              if (!hasHeading(matchAbUrl, hash, slugify, uniqueSlugStartIndex)) {
+                // hash is not found
+                result.deadlink.list.push({ ...baseReportObj, errMsg: 'Hash is not found' });
+              }
             }
 
-            if (!hasHeading(matchAbUrl, hash, slugify, uniqueSlugStartIndex)) {
-              // hash is not found
-              result.deadlink.list.push({ ...baseReportObj, errMsg: 'Hash is not found' });
-            }
-          }
-
-          if (fix) {
-            const newUrl = url.format(urlObj);
-            if (newUrl !== matchUrl) {
-              newChar = `${matches[1]}${isVariable ? `: ${newUrl}` : `(${newUrl})`}`;
+            if (fix) {
+              const newUrl = url.format(urlObj);
+              if (newUrl !== matchUrl) {
+                newChar = `${matches[1]}${isVariable ? `: ${newUrl}` : `(${newUrl})`}`;
+              }
             }
           }
         }
       }
-
       scanIndex += matches.index + char.length;
       content = content.substring(matches.index + char.length);
       newContent += beforeContent + newChar;

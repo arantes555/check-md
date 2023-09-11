@@ -59,3 +59,7 @@ Footnotes[^test17] test ref
 ![test25](@secondalias/placeholder-image.png)
 
 [test26](firstalias#test)
+
+\[test27\]: this is not a link
+
+\\[test28]: this actually is a link

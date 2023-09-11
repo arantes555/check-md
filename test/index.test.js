@@ -9,7 +9,7 @@ describe('test/index.test.js', () => {
 
   it('should works without error', async () => {
     const result = await checkMd.check({ cwd: path.resolve(__dirname, './fixtures/docs1') });
-    assert(result.deadlink.list.length === 14);
+    assert(result.deadlink.list.length === 15);
     assert(result.warning.list.length === 1);
     assert(result.deadlink.list[0].fullText.includes('[test1]'));
     assert(result.deadlink.list[0].line === 5);
@@ -33,26 +33,27 @@ describe('test/index.test.js', () => {
     assert(result.deadlink.list[10].fullText.includes('![test24]'));
     assert(result.deadlink.list[11].fullText.includes('![test25]'));
     assert(result.deadlink.list[12].fullText.includes('[test26]'));
-    assert(result.deadlink.list[13].fullText.includes('[test27]'));
+    assert(result.deadlink.list[13].fullText.includes('[test28]'));
+    assert(result.deadlink.list[14].fullText.includes('[test29]'));
     assert(result.warning.list[0].fullText.includes('[test6]'));
 
     const resultWithIgnoreFootnotes = await checkMd.check({
       cwd: path.resolve(__dirname, './fixtures/docs1'),
       ignoreFootnotes: true,
     });
-    assert(resultWithIgnoreFootnotes.deadlink.list.length === 13);
+    assert(resultWithIgnoreFootnotes.deadlink.list.length === 14);
 
     const resultWithUniqueSlugStartIndex = await checkMd.check({
       cwd: path.resolve(__dirname, './fixtures/docs1'),
       uniqueSlugStartIndex: 1,
     });
-    assert(resultWithUniqueSlugStartIndex.deadlink.list.length === 13);
+    assert(resultWithUniqueSlugStartIndex.deadlink.list.length === 14);
 
     const resultWithAliases = await checkMd.check({
       cwd: path.resolve(__dirname, './fixtures/docs1'),
       aliases: [ `firstalias=${path.resolve(__dirname, './fixtures/docs1/dir')}`, `@secondalias=${path.resolve(__dirname, './fixtures/docs1/dir')}` ],
     });
-    assert(resultWithAliases.deadlink.list.length === 10);
+    assert(resultWithAliases.deadlink.list.length === 11);
   });
 
   it('should fix without error', async () => {
